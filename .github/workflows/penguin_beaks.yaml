@@ -1,0 +1,35 @@
+name: penguins-have-long-noses
+on: [push]
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    # optionally use a convenient Ubuntu LTS + DVC + CML image
+    # container: ghcr.io/iterative/cml:0-dvc2-base1
+    steps:
+      - uses: actions/checkout@v3
+      # may need to setup NodeJS & Python3 on e.g. self-hosted
+      # - uses: actions/setup-node@v3
+      #   with:
+      #     node-version: '16'
+      # - uses: actions/setup-python@v4
+      #   with:
+      #     python-version: '3.x'
+      - uses: iterative/setup-cml@v1
+      
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        
+      - name: Setup dependencies
+        run: |
+          R -e 'install.packages("renv")' 
+          R -e 'renv::restore()'
+          
+      - name: Analyze some penguin beaks
+        env: 
+          repo_token: ${{ secrets.GITHUB_TOKEN }} 
+        run: |
+          R -e 'renv::run("penguin_analysis.R")'
+          # Add picture
+          cml-publish my_penguin_plot.png --md > report.md 
+          # Add table
+          cat mymodel.html >> report.md
